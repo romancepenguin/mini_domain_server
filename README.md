@@ -1,10 +1,37 @@
-네트워크 도메인서비스
+# 도메인 서버 개발
 
-도메인 혹은 ip주소 입력시 도메인 정보 출력
+대학과제
+쓰레드 프로그래밍과 크리티컬 섹션 구현
 
-top,low 명령어 입력시 가장 높거나 낮은 조회수 도메인 정보 출력
+## 서버 기능
+- table 파일 정보를 읽어서 도메인 정보를 반환
+- 질의한 도메인 정보 count ++
+- 클라이언트의 접속 기록, 접속 종료 logtable 파일에 기록
+- 다중 접속 가능
+- table 파일 쓰기 크리티컬 섹션 처리(count 정보를 수정할 때 lock 함)
 
-클라인어트의 접속기록 ,접속종료 logtable에 저장
+## 클라이언트 기능
+- 도메인 혹은 IP 질의
+
+## 실행 환경
+- 리눅스(우분투)
+
+## Usage
+서버
+```
+gcc -pthread server_domain.c -o server
+./server [port]
+```
+
+클라이언트
+```
+gcc -pthread client_domain.c -o server
+./client [ip] [port]
+```
+
+## 실행 이미지(ex.)
+서버
+![image](https://user-images.githubusercontent.com/28975774/111065110-6325a000-84fb-11eb-82db-50107c69a4a2.png)
 
 
-다중접속가능
+![image](https://user-images.githubusercontent.com/28975774/111065144-9405d500-84fb-11eb-853c-6707a0ef48f7.png)
