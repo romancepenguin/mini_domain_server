@@ -33,5 +33,5 @@ gcc -pthread client_domain.c -o server
 서버
 ![image](https://user-images.githubusercontent.com/28975774/111065110-6325a000-84fb-11eb-82db-50107c69a4a2.png)
 
-
+클라이언트
 ![image](https://user-images.githubusercontent.com/28975774/111065144-9405d500-84fb-11eb-853c-6707a0ef48f7.png)
