@@ -55,34 +55,38 @@ int main(int argc, char *argv[])
 	}
   
 	pthread_mutex_init(&mutx, NULL);
-	serv_sock=socket(PF_INET, SOCK_STREAM, 0);
+	serv_sock=socket(PF_INET, SOCK_STREAM, 0); //socket 생성, 반환값을 파일 디스크립터
 
 	memset(&serv_adr, 0, sizeof(serv_adr));
 	serv_adr.sin_family=AF_INET; 
 	serv_adr.sin_addr.s_addr=htonl(INADDR_ANY);
 	serv_adr.sin_port=htons(atoi(argv[1]));
 	
-	if(bind(serv_sock, (struct sockaddr*) &serv_adr, sizeof(serv_adr))==-1)
+	if(bind(serv_sock, (struct sockaddr*) &serv_adr, sizeof(serv_adr))==-1) //프로세스에 소켓 묵기
 		error_handling("bind() error");
-	if(listen(serv_sock, 5)==-1)
+	if(listen(serv_sock, 5)==-1) //소켓 lsten
 		error_handling("listen() error");
 	
 	while(1)
 	{
 		clnt_adr_sz=sizeof(clnt_adr);
-		clnt_sock=accept(serv_sock, (struct sockaddr*)&clnt_adr,&clnt_adr_sz);
-
+		clnt_sock=accept(serv_sock, (struct sockaddr*)&clnt_adr,&clnt_adr_sz); //연결 받아들이기
+                //새로운 소켓 생성하여 클라이언트 매핑 시킴
+		
 		today(d_buf,1);
 		nowtime(t_buf,1);
 
-		pthread_mutex_lock(&mutx);
+		pthread_mutex_lock(&mutx); //?
+		//하나의 쓰레드만 아래의 코드 사용 
 		clientInfo(1,d_buf,t_buf,inet_ntoa(clnt_adr.sin_addr));
 		strncpy(clnt_addr_buffer,inet_ntoa(clnt_adr.sin_addr),strlen(inet_ntoa(clnt_adr.sin_addr)));
 		//pthread_mutex_unlock(&mutx);
 	
 		pthread_create(&t_id, NULL, handle_clnt, (void*)&clnt_sock);
-		pthread_detach(t_id);
-		pthread_mutex_unlock(&mutx);
+		//pthread_create(thread id, 쓰레드의 특성, 어떤 로직을 작동시킬지, arg)
+		pthread_detach(t_id); //해제
+		pthread_mutex_unlock(&mutx); //?
+		
 		printf("Connected client IP: %s \n", inet_ntoa(clnt_adr.sin_addr));
 	}
 	close(serv_sock);
@@ -111,18 +115,19 @@ void * handle_clnt(void * arg)
 
 		if(!strcmp(msg,"top")) 
 		{
-			pthread_mutex_lock(&mutx);
+			pthread_mutex_lock(&mutx); //읽기 작업만 하므로 mutex 락까지 할 필요가 있나?
 			//memset(msg,0,BUF_SIZE);
 			topDomain(msg);
-			write(clnt_sock, msg, strlen(msg));	
+			write(clnt_sock, msg, strlen(msg));  //send recv
+			//write(파일 디스크립터, 보낼 메시지, 보낼 메시지 크기)
 			pthread_mutex_unlock(&mutx);	
 		}
 		else if(!strcmp(msg,"low")) 
 		{
-			pthread_mutex_lock(&mutx);
+			pthread_mutex_lock(&mutx); //읽기 작업만 하므로 mutex 락까지 할 필요가 있나?
 			//memset(msg,0,BUF_SIZE);
 			lowDomain(msg);
-			write(clnt_sock, msg, strlen(msg));	
+			write(clnt_sock, msg, strlen(msg)); //send recv
 			pthread_mutex_unlock(&mutx);	
 		}
 		else{ 
@@ -151,16 +156,20 @@ int send_msg(char * msg, int len,int clnt_sock)   // send to all
 {
 	int i;
 	pthread_mutex_lock(&mutx);
+	//========= critical section ============
+	//하나의 쓰레드만 아래 코드 접근 가능
+	//쓰레드가 차례대로 실행 됨
 
-	msgMake(msg);
+	msgMake(msg); // 파일 수정 작업이 
 	//hit_array();
 	printf("보내는 전체 메시지 : %s\n",msg);
 	//for(int i=0;i<strlen(msg)+1;i++)
 	//	printf("보내는 메시지 : %c\n",msg[i]);
-	if(write(clnt_sock, msg, strlen(msg))<0){
+	if(write(clnt_sock, msg, strlen(msg))<0){  //send recv
 		return -1;
 	}
 	memset(msg,0,BUF_SIZE);
+	//========= critical section ============
 	pthread_mutex_unlock(&mutx);
 	return 1;
 }
